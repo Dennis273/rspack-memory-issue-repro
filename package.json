@@ -1,0 +1,13 @@
+{
+  "name": "rspack-memory-issue-repro",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "compare": "node compare.mjs",
+    "repro": "node --expose-gc repro.mjs"
+  },
+  "dependencies": {
+    "rspack-2.0.4": "npm:@rspack/core@2.0.4",
+    "rspack-2.3.1": "npm:@rspack/core@2.3.1"
+  }
+}
