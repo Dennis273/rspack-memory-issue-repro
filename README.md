@@ -25,20 +25,24 @@ Environment variables: `MODULES` (3000), `CHANGED` (400), `ROUNDS` (100), `SAMPL
 
 Linux x64, Node 22, 4 vCPU. RSS in MB after `gc()`.
 
-| rebuilds | 2.0.4 | 2.0.8 | 2.3.1 | 2.3.1 + [fix] |
-| -------- | ----- | ----- | ----- | ------------- |
-| 0        | 239   | 235   | 209   | 213           |
-| 20       | 344   | 350   | 318   | 300           |
-| 40       | 378   | 416   | 357   | 307           |
-| 60       | 406   | 462   | 395   | 316           |
-| 80       | 458   | 535   | 438   | 338           |
-| 100      | 476   | 584   | 472   | 345           |
-| MB per 100 rebuilds | 171 | 296 | 199 | 62 |
+| rebuilds | 2.0.4 | 2.0.8 | 2.3.1 | 2.3.1 + [dense storage fix] | 2.3.1 + [exports info fix] | 2.3.1 + both |
+| -------- | ----- | ----- | ----- | --------------------------- | -------------------------- | ------------ |
+| 0        | 239   | 235   | 211   | 213                         | 219                        | 220          |
+| 20       | 344   | 350   | 317   | 300                         | 320                        | 296          |
+| 40       | 378   | 416   | 356   | 307                         | 344                        | 290          |
+| 60       | 406   | 462   | 386   | 316                         | 373                        | 292          |
+| 80       | 458   | 535   | 437   | 338                         | 403                        | 295          |
+| 100      | 476   | 584   | 472   | 345                         | 433                        | 297          |
+| MB per 100 rebuilds | 171 | 296 | 200 | 62 | 141 | 6 |
 
 The last row is the least-squares slope from round 20 on.
 
-Every version grows. Since 2.1.0, part of the growth comes from the module graph's dense storage: dependencies and connections are kept in `Vec<Option<V>>` tables indexed by `DependencyId` / `ModuleGraphConnectionId`. These ids are never reused, and every rebuilt module gets new ones, so the tables grow with the number of ids ever allocated. [fix] bounds these tables and cuts the growth of 2.3.1 by about 70%.
+Two things grow with every rebuild:
 
-The remaining growth is not covered by [fix]. One known source is `ExportsInfoArtifact`, which keeps a stale `ExportsInfoData` for every rebuilt module.
+- Since 2.1.0, the module graph keeps dependencies and connections in `Vec<Option<V>>` tables indexed by `DependencyId` / `ModuleGraphConnectionId`. These ids are never reused and every rebuilt module gets new ones, so the tables grow with the number of ids ever allocated.
+- `ExportsInfoArtifact` keeps the old `ExportsInfoData` of every rebuilt module, and clones all of it at every checkpoint. This one also affects 2.0.x.
 
-[fix]: https://github.com/Dennis273/rspack/tree/claude/vibrant-cannon-f4t37p
+With both fixes, RSS stays flat after warm-up.
+
+[dense storage fix]: https://github.com/Dennis273/rspack/tree/claude/vibrant-cannon-f4t37p
+[exports info fix]: https://github.com/Dennis273/rspack/tree/claude/exports-info-gc
